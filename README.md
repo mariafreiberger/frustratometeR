@@ -8,15 +8,20 @@ An R package for caculating energetic local frustration
 
 # dependencies
 
-# R packages
+**R packages**
 bio3D
+`install.packages("bio3d")`
 
-# Python
+**Python**
 numpy 
+`pip install numpy`
+note: replace pip by pip3 if needed
 
 
-# others
+**others**
 pymol
+`sudo apt install pymol`
+
 perl
 modeller
 

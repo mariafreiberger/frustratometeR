@@ -282,7 +282,7 @@ plot_contact_map <-function(Pdb, chain=NULL)
   # dev.off()
 }
 
-view_pymol <- function(pdb)
+view_frustration_pymol <- function(pdb)
 {
   system(paste("cd ", Pdb$JobDir,  "; pymol ", Pdb$JobDir, Pdb$PdbBase, ".pdb_", Pdb$mode, ".pml", sep=""))
 }
@@ -306,4 +306,4 @@ plot_5Andens(Pdb, chain=NULL)
 plot_5Adens_proportions(Pdb, chain=NULL)
 plot_contact_map(Pdb, chain="A")
 
-view_pymol(Pdb)
+view_frustration_pymol(Pdb)

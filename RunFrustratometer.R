@@ -1,6 +1,6 @@
 library(bio3d)
 
-pdb_equivalences <- function(Pdb)
+pdb_equivalences <- function(Pdb, JobDir, PdbBase)
 {
   existing_res <- unique(cbind(Pdb$atom$chain[which(Pdb$atom$type=="ATOM")], Pdb$atom$resno[which(Pdb$atom$type=="ATOM")], Pdb$atom$resid[which(Pdb$atom$type=="ATOM")]))
   equivalences <- cbind(existing_res[,1], seq(1:length(existing_res[,1])), existing_res[,2], existing_res[,3])
@@ -29,7 +29,7 @@ check_backbone_complete <- function(Pdb)
   return(Complete)
 }
 
-complete_backbone <- function(Pdb)
+complete_backbone <- function(Pdb, scriptsDir, JobDir, PdbBase)
 {
   if(!check_backbone_complete(Pdb))
   {
@@ -49,10 +49,10 @@ calculate_frustration <- function(PdbFile=PdbFile, Electrostatics_K=3.1, seqdist
   system(paste("cp ", PdbFile, " ", JobDir, sep=""))
   
   # Save equivalences
-  Pdb <- pdb_equivalences(Pdb)
-  complete_backbone(Pdb)
+  Pdb <- pdb_equivalences(Pdb, JobDir, PdbBase)
+  complete_backbone(Pdb, scriptsDir, JobDir, PdbBase)
   
-  PdbBase <- basename.pdb(PdbFile)
+  # PdbBase <- basename.pdb(PdbFile)
   
   print("Preparing files..")
   #Prepare the PDB file to get awsem input files, create the workdir and move neccessary files to it.

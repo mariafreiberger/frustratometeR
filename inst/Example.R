@@ -1,3 +1,6 @@
+library(devtools)
+install_github("gonzaparra/frustratometeR")
+
 library(frustratometeR)
 library(bio3d)
 

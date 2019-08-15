@@ -54,6 +54,7 @@ calculate_frustration <- function(PdbFile=PdbFile, Electrostatics_K=3.1, seqdist
   Pdb[["PdbBase"]] <- PdbBase
   Pdb[["JobDir"]] <- JobDir
   Pdb[["scriptsDir"]] <- scriptsDir
+  Pdb[["mode"]] <- Modes
   
   #Creates JobDir
   system(paste("mkdir ", Pdb$JobDir, sep=""))
@@ -73,7 +74,7 @@ calculate_frustration <- function(PdbFile=PdbFile, Electrostatics_K=3.1, seqdist
   print("Setting options...")
   #Modify the .in file to run a single step - Modify the fix_backbone file to change the mode and set options
   
-  system(paste("cd ", JobDir, "; sed -i 's/run		10000/run		0/g' ", Pdb$PdbBase, ".in; sed -i 's/mutational/", Modes, "/g' fix_backbone_coeff.data",  sep=""))
+  system(paste("cd ", JobDir, "; sed -i 's/run		10000/run		0/g' ", Pdb$PdbBase, ".in; sed -i 's/mutational/", Pdb$mode, "/g' fix_backbone_coeff.data",  sep=""))
   
   if(!is.null(Electrostatics_K))
   {
@@ -86,25 +87,25 @@ calculate_frustration <- function(PdbFile=PdbFile, Electrostatics_K=3.1, seqdist
   print("calculating...")
   system(paste("cp ", scriptsDir, "lmp_serial_", seqdist, " ", Pdb$JobDir, "; cd ", Pdb$JobDir, "; ./lmp_serial_", seqdist, " < ", Pdb$PdbBase, ".in", sep=""))
 
-  if(Modes == "configurational" | Modes == "mutational")
+  if(Pdb$mode == "configurational" | Pdb$mode == "mutational")
   {
-    system(paste("perl ", scriptsDir, "5Adens.pl ", Pdb$PdbBase, ".pdb ", gsub(".$", "", Pdb$JobDir), " ", Modes, sep=""))
+    system(paste("perl ", scriptsDir, "5Adens.pl ", Pdb$PdbBase, ".pdb ", gsub(".$", "", Pdb$JobDir), " ", Pdb$mode, sep=""))
   }
-  system(paste("perl ", scriptsDir, "RenumFiles.pl ", Pdb$PdbBase, " ", Pdb$JobDir, " ", Modes, sep="" ))
+  system(paste("perl ", scriptsDir, "RenumFiles.pl ", Pdb$PdbBase, " ", Pdb$JobDir, " ", Pdb$mode, sep="" ))
   
-  system(paste("perl ", scriptsDir, "GenerateVisualizations.pl ", Pdb$PdbBase, "_", Modes, ".pdb_auxiliar ", Pdb$PdbBase, " ", gsub(".$", "", Pdb$JobDir), " ", Modes, sep=""))
+  system(paste("perl ", scriptsDir, "GenerateVisualizations.pl ", Pdb$PdbBase, "_", Pdb$mode, ".pdb_auxiliar ", Pdb$PdbBase, " ", gsub(".$", "", Pdb$JobDir), " ", Pdb$mode, sep=""))
   system(paste("cp ", scriptsDir, "draw_links.py ", Pdb$JobDir, sep=""))
   
   return(Pdb)
 }
 
-plot_5Andens <- function(Pdb, chain=NULL, Modes)
+plot_5Andens <- function(Pdb, chain=NULL)
 {
   JobID=Pdb$PdbBase;
   Dir=Pdb$JobDir;
-  mode=Modes;
+  mode=Pdb$mode;
   
-  AdensTable=read.table(file=paste(Dir,"/", JobID,".pdb_", mode, "_5adens", sep=""))
+  AdensTable=read.table(file=paste(Dir,"/", JobID,".pdb_", Pdb$mode, "_5adens", sep=""))
   
   
   Positions=as.numeric(AdensTable[,1])
@@ -142,13 +143,13 @@ plot_5Andens <- function(Pdb, chain=NULL, Modes)
   }
 }
 
-plot_5Adens_proportions <- function(Pdb, chain=NULL, Modes)
+plot_5Adens_proportions <- function(Pdb, chain=NULL)
 {
   JobID=Pdb$PdbBase;
   Dir=Pdb$JobDir;
-  mode=Modes;
+  mode=Pdb$mode;
   
-  AdensTable=read.table(file=paste(Dir,"/", JobID,".pdb_", mode, "_5adens", sep=""))
+  AdensTable=read.table(file=paste(Dir,"/", JobID,".pdb_", Pdb$mode, "_5adens", sep=""))
   
   Positions=as.numeric(AdensTable[,1])
   Chains=AdensTable[,2]
@@ -190,13 +191,13 @@ plot_5Adens_proportions <- function(Pdb, chain=NULL, Modes)
   }
 }
 
-plot_contact_map <-function(Pdb, chain=NULL, Modes)
+plot_contact_map <-function(Pdb, chain=NULL)
 {
   JobID=Pdb$PdbBase;
   Dir=Pdb$JobDir;
-  mode=Modes;
+  mode=Pdb$mode;
   
-  AdensTable=read.table(file=paste(Dir,"/", JobID,".pdb_", mode, "_5adens", sep=""))
+  AdensTable=read.table(file=paste(Dir,"/", JobID,".pdb_", Pdb$mode, "_5adens", sep=""))
   
   Positions=as.numeric(AdensTable[,1])
   Chains=AdensTable[,2]
@@ -207,7 +208,7 @@ plot_contact_map <-function(Pdb, chain=NULL, Modes)
   
   PositionsTotal=seq(from=1, to=length(Positions), by=1)
   
-  datos<-read.table(file=paste(Dir,"/", JobID, ".pdb_", mode ,sep=""),stringsAsFactors = F)
+  datos<-read.table(file=paste(Dir,"/", JobID, ".pdb_", Pdb$mode ,sep=""),stringsAsFactors = F)
   
   chains<-sort(unique(c(datos$V3,datos$V4)))
   positions<-matrix(ncol=3,nrow=length(chains))
@@ -281,6 +282,11 @@ plot_contact_map <-function(Pdb, chain=NULL, Modes)
   # dev.off()
 }
 
+view_pymol <- function(pdb)
+{
+  system(paste("cd ", Pdb$JobDir,  "; pymol ", Pdb$JobDir, Pdb$PdbBase, ".pdb_", Pdb$mode, ".pml", sep=""))
+}
+
 ############# Input ####################################################
 ################################################
 
@@ -296,8 +302,8 @@ Electrostatics_K=3.1
 # Calculate Frustration
 Pdb=calculate_frustration(PdbFile=PdbFile, Modes = "configurational", Electrostatics_K = NULL, scriptsDir = scriptsDir, ResultsDir = ResultsDir, seqdist=12)
 
-PdbBase <- basename.pdb(PdbFile)
+plot_5Andens(Pdb, chain=NULL)
+plot_5Adens_proportions(Pdb, chain=NULL)
+plot_contact_map(Pdb, chain="A")
 
-plot_5Andens(Pdb, chain=NULL, Modes)
-plot_5Adens_proportions(Pdb, chain=NULL, Modes)
-plot_contact_map(Pdb, chain="A", Modes)
+view_pymol(Pdb)

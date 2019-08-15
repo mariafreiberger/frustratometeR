@@ -1,3 +1,7 @@
+# dependencies:
+# numpy
+# bio3d
+
 library(bio3d)
 
 pdb_equivalences <- function(Pdb, JobDir, PdbBase)
@@ -40,55 +44,64 @@ complete_backbone <- function(Pdb, scriptsDir, JobDir, PdbBase)
 
 calculate_frustration <- function(PdbFile=PdbFile, Electrostatics_K=3.1, seqdist=12, Modes="configurational", scriptsDir=scriptsDir, ResultsDir="/home/gonzalo/Desktop/")
 {
+
+  Pdb <- read.pdb(PdbFile)
   
   PdbBase <- basename.pdb(PdbFile)
+  
   JobDir=paste(ResultsDir, PdbBase, ".done/", sep="")
   
+  Pdb[["PdbBase"]] <- PdbBase
+  Pdb[["JobDir"]] <- JobDir
+  Pdb[["scriptsDir"]] <- scriptsDir
+  
   #Creates JobDir
-  system(paste("mkdir ", JobDir, sep=""))
-  system(paste("cp ", PdbFile, " ", JobDir, sep=""))
+  system(paste("mkdir ", Pdb$JobDir, sep=""))
+  system(paste("cp ", PdbFile, " ", Pdb$JobDir, sep=""))
   
   # Save equivalences
-  Pdb <- pdb_equivalences(Pdb, JobDir, PdbBase)
-  complete_backbone(Pdb, scriptsDir, JobDir, PdbBase)
+  Pdb <- pdb_equivalences(Pdb, Pdb$JobDir, Pdb$PdbBase)
+  complete_backbone(Pdb, scriptsDir, Pdb$JobDir, Pdb$PdbBase)
   
   # PdbBase <- basename.pdb(PdbFile)
   
   print("Preparing files..")
   #Prepare the PDB file to get awsem input files, create the workdir and move neccessary files to it.
-  system(paste("cd ", JobDir, "; pwd; ", scriptsDir, "AWSEMFiles/AWSEMTools/PdbCoords2Lammps.sh ", PdbBase, " ", PdbBase, " ", scriptsDir, sep=""))
-  system(paste("cp ", scriptsDir, "AWSEMFiles/*.dat* ", JobDir, sep=""))
+  system(paste("cd ", Pdb$JobDir, "; pwd; ", scriptsDir, "AWSEMFiles/AWSEMTools/PdbCoords2Lammps.sh ", Pdb$PdbBase, " ", Pdb$PdbBase, " ", scriptsDir, sep=""))
+  system(paste("cp ", scriptsDir, "AWSEMFiles/*.dat* ", Pdb$JobDir, sep=""))
   
   print("Setting options...")
   #Modify the .in file to run a single step - Modify the fix_backbone file to change the mode and set options
   
-  system(paste("cd ", JobDir, "; sed -i 's/run		10000/run		0/g' ", PdbBase, ".in; sed -i 's/mutational/", Modes, "/g' fix_backbone_coeff.data",  sep=""))
+  system(paste("cd ", JobDir, "; sed -i 's/run		10000/run		0/g' ", Pdb$PdbBase, ".in; sed -i 's/mutational/", Modes, "/g' fix_backbone_coeff.data",  sep=""))
   
   if(!is.null(Electrostatics_K))
   {
     print("Setting electrostatics...")
-    system(paste("cd ", JobDir, "; sed -i 's/\\[DebyeHuckel\\]-/\\[DebyeHuckel\\]/g' fix_backbone_coeff.data; sed -i 's/4.15 4.15 4.15/", Electrostatics_K, " ", Electrostatics_K, " ", Electrostatics_K, "/g' fix_backbone_coeff.data;", sep=""))
+    system(paste("cd ", Pdb$JobDir, "; sed -i 's/\\[DebyeHuckel\\]-/\\[DebyeHuckel\\]/g' fix_backbone_coeff.data; sed -i 's/4.15 4.15 4.15/", Electrostatics_K, " ", Electrostatics_K, " ", Electrostatics_K, "/g' fix_backbone_coeff.data;", sep=""))
     print("Setting electrostatics...")
-    system(paste("cd ", JobDir, "; python ", scriptsDir, "Pdb2Gro.py ", PdbBase, ".pdb ", PdbBase, ".pdb.gro; perl ", scriptsDir, "GenerateChargeFile.pl ", PdbBase, ".pdb.gro > ", JobDir, "charge_on_residues.dat", sep=""))
+    system(paste("cd ", Pdb$JobDir, "; python ", scriptsDir, "Pdb2Gro.py ", Pdb$PdbBase, ".pdb ", Pdb$PdbBase, ".pdb.gro; perl ", scriptsDir, "GenerateChargeFile.pl ", Pdb$PdbBase, ".pdb.gro > ", JobDir, "charge_on_residues.dat", sep=""))
   }
   
   print("calculating...")
-  system(paste("cp ", scriptsDir, "lmp_serial_", seqdist, " ", JobDir, "; cd ", JobDir, "; ./lmp_serial_", seqdist, " < ", PdbBase, ".in", sep=""))
+  system(paste("cp ", scriptsDir, "lmp_serial_", seqdist, " ", Pdb$JobDir, "; cd ", Pdb$JobDir, "; ./lmp_serial_", seqdist, " < ", Pdb$PdbBase, ".in", sep=""))
 
   if(Modes == "configurational" | Modes == "mutational")
   {
-    system(paste("perl ", scriptsDir, "5Adens.pl ", PdbBase, ".pdb ", gsub(".$", "",JobDir), " ", Modes, sep=""))
+    system(paste("perl ", scriptsDir, "5Adens.pl ", Pdb$PdbBase, ".pdb ", gsub(".$", "", Pdb$JobDir), " ", Modes, sep=""))
   }
-  system(paste("perl ", scriptsDir, "RenumFiles.pl ", PdbBase, " ", JobDir, " ", Modes, sep="" ))
+  system(paste("perl ", scriptsDir, "RenumFiles.pl ", Pdb$PdbBase, " ", Pdb$JobDir, " ", Modes, sep="" ))
   
-  system(paste("perl ", scriptsDir, "GenerateVisualizations.pl ", PdbBase, "_", Modes, ".pdb_auxiliar ", PdbBase, " ", gsub(".$", "",JobDir), " ", Modes, sep=""))
-  system(paste("cp ", scriptsDir, "draw_links.py ", JobDir, sep=""))
+  system(paste("perl ", scriptsDir, "GenerateVisualizations.pl ", Pdb$PdbBase, "_", Modes, ".pdb_auxiliar ", Pdb$PdbBase, " ", gsub(".$", "", Pdb$JobDir), " ", Modes, sep=""))
+  system(paste("cp ", scriptsDir, "draw_links.py ", Pdb$JobDir, sep=""))
+  
+  return(Pdb)
 }
 
-plot_5Andens <- function(chain=NULL)
+plot_5Andens <- function(Pdb, chain=NULL, Modes)
 {
-  JobID=PdbBase;
-  Dir=JobDir;
+  JobID=Pdb$PdbBase;
+  Dir=Pdb$JobDir;
   mode=Modes;
   
   AdensTable=read.table(file=paste(Dir,"/", JobID,".pdb_", mode, "_5adens", sep=""))
@@ -129,10 +142,10 @@ plot_5Andens <- function(chain=NULL)
   }
 }
 
-plot_5Adens_proportions <- function(chain=NULL)
+plot_5Adens_proportions <- function(Pdb, chain=NULL, Modes)
 {
-  JobID=PdbBase;
-  Dir=JobDir;
+  JobID=Pdb$PdbBase;
+  Dir=Pdb$JobDir;
   mode=Modes;
   
   AdensTable=read.table(file=paste(Dir,"/", JobID,".pdb_", mode, "_5adens", sep=""))
@@ -177,10 +190,10 @@ plot_5Adens_proportions <- function(chain=NULL)
   }
 }
 
-plot_contact_map <-function(chain=NULL)
+plot_contact_map <-function(Pdb, chain=NULL, Modes)
 {
-  JobID=PdbBase;
-  Dir=JobDir;
+  JobID=Pdb$PdbBase;
+  Dir=Pdb$JobDir;
   mode=Modes;
   
   AdensTable=read.table(file=paste(Dir,"/", JobID,".pdb_", mode, "_5adens", sep=""))
@@ -271,8 +284,7 @@ plot_contact_map <-function(chain=NULL)
 ############# Input ####################################################
 ################################################
 
-PdbFile="/home/gonzalo/Desktop/frustratometer2-master/1ikn.pdb"
-Pdb <- read.pdb(PdbFile)
+PdbFile="/home/gonzalo/Desktop/frustratometer2-master/1n0r.pdb"
 
 ResultsDir="/home/gonzalo/Desktop/"
 Modes="configurational"
@@ -282,8 +294,10 @@ Electrostatics_K=3.1
 
 ########################################################################
 # Calculate Frustration
-calculate_frustration(PdbFile=PdbFile, Modes = "configurational", Electrostatics_K = NULL, scriptsDir = scriptsDir, ResultsDir = ResultsDir, seqdist=12)
+Pdb=calculate_frustration(PdbFile=PdbFile, Modes = "configurational", Electrostatics_K = NULL, scriptsDir = scriptsDir, ResultsDir = ResultsDir, seqdist=12)
 
-plot_5Andens(chain=NULL)
-plot_5Adens_proportions(chain=NULL)
-plot_contact_map(chain="A")
+PdbBase <- basename.pdb(PdbFile)
+
+plot_5Andens(Pdb, chain=NULL, Modes)
+plot_5Adens_proportions(Pdb, chain=NULL, Modes)
+plot_contact_map(Pdb, chain="A", Modes)

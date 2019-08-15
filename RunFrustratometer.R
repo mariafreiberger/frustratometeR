@@ -38,7 +38,7 @@ complete_backbone <- function(Pdb)
   }
 }
 
-calculate_frustration <- function(PdbFile=PdbFile, Electrostatics_K=3.1, seqdist=12, Modes="configurational", scriptsDir="/home/gonzalo/Desktop/frustratometer2-master/Scripts/", ResultsDir="/home/gonzalo/Desktop/")
+calculate_frustration <- function(PdbFile=PdbFile, Electrostatics_K=3.1, seqdist=12, Modes="configurational", scriptsDir=scriptsDir, ResultsDir="/home/gonzalo/Desktop/")
 {
   
   PdbBase <- basename.pdb(PdbFile)

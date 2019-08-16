@@ -33,11 +33,11 @@ check_backbone_complete <- function(Pdb)
   return(Complete)
 }
 
-complete_backbone <- function(Pdb, scriptsDir, JobDir, PdbBase)
+complete_backbone <- function(Pdb, JobDir, PdbBase)
 {
   if(!check_backbone_complete(Pdb))
   {
-    system(paste("python ", scriptsDir, "MissingAtoms.py ",  JobDir, PdbBase, ".pdb", sep=""))
+    system(paste("python ", Pdb$scriptsDir, "MissingAtoms.py ",  JobDir, PdbBase, ".pdb", sep=""))
     system(paste("mv ", JobDir, PdbBase, ".pdb_completed", " ", JobDir, PdbBase, ".pdb", sep=""))
   }
 }
@@ -62,14 +62,14 @@ calculate_frustration <- function(PdbFile=PdbFile, Electrostatics_K=3.1, seqdist
 
   # Save equivalences
   Pdb <- pdb_equivalences(Pdb, Pdb$JobDir, Pdb$PdbBase)
-  complete_backbone(Pdb, scriptsDir, Pdb$JobDir, Pdb$PdbBase)
+  complete_backbone(Pdb, Pdb$JobDir, Pdb$PdbBase)
 
   # PdbBase <- basename.pdb(PdbFile)
 
   print("Preparing files..")
   #Prepare the PDB file to get awsem input files, create the workdir and move neccessary files to it.
-  system(paste("cd ", Pdb$JobDir, "; pwd; ", scriptsDir, "AWSEMFiles/AWSEMTools/PdbCoords2Lammps.sh ", Pdb$PdbBase, " ", Pdb$PdbBase, " ", scriptsDir, sep=""))
-  system(paste("cp ", scriptsDir, "AWSEMFiles/*.dat* ", Pdb$JobDir, sep=""))
+  system(paste("cd ", Pdb$JobDir, "; pwd; ", Pdb$scriptsDir, "AWSEMFiles/AWSEMTools/PdbCoords2Lammps.sh ", Pdb$PdbBase, " ", Pdb$PdbBase, " ", Pdb$scriptsDir, sep=""))
+  system(paste("cp ", Pdb$scriptsDir, "AWSEMFiles/*.dat* ", Pdb$JobDir, sep=""))
 
   print("Setting options...")
   #Modify the .in file to run a single step - Modify the fix_backbone file to change the mode and set options
@@ -81,20 +81,20 @@ calculate_frustration <- function(PdbFile=PdbFile, Electrostatics_K=3.1, seqdist
     print("Setting electrostatics...")
     system(paste("cd ", Pdb$JobDir, "; sed -i 's/\\[DebyeHuckel\\]-/\\[DebyeHuckel\\]/g' fix_backbone_coeff.data; sed -i 's/4.15 4.15 4.15/", Electrostatics_K, " ", Electrostatics_K, " ", Electrostatics_K, "/g' fix_backbone_coeff.data;", sep=""))
     print("Setting electrostatics...")
-    system(paste("cd ", Pdb$JobDir, "; python ", scriptsDir, "Pdb2Gro.py ", Pdb$PdbBase, ".pdb ", Pdb$PdbBase, ".pdb.gro; perl ", scriptsDir, "GenerateChargeFile.pl ", Pdb$PdbBase, ".pdb.gro > ", JobDir, "charge_on_residues.dat", sep=""))
+    system(paste("cd ", Pdb$JobDir, "; python ", Pdb$scriptsDir, "Pdb2Gro.py ", Pdb$PdbBase, ".pdb ", Pdb$PdbBase, ".pdb.gro; perl ", Pdb$scriptsDir, "GenerateChargeFile.pl ", Pdb$PdbBase, ".pdb.gro > ", JobDir, "charge_on_residues.dat", sep=""))
   }
 
   print("calculating...")
-  system(paste("cp ", scriptsDir, "lmp_serial_", seqdist, " ", Pdb$JobDir, "; cd ", Pdb$JobDir, "; ./lmp_serial_", seqdist, " < ", Pdb$PdbBase, ".in", sep=""))
+  system(paste("cp ", Pdb$scriptsDir, "lmp_serial_", seqdist, " ", Pdb$JobDir, "; cd ", Pdb$JobDir, "; ./lmp_serial_", seqdist, " < ", Pdb$PdbBase, ".in", sep=""))
 
   if(Pdb$mode == "configurational" | Pdb$mode == "mutational")
   {
-    system(paste("perl ", scriptsDir, "5Adens.pl ", Pdb$PdbBase, ".pdb ", gsub(".$", "", Pdb$JobDir), " ", Pdb$mode, sep=""))
+    system(paste("perl ", Pdb$scriptsDir, "5Adens.pl ", Pdb$PdbBase, ".pdb ", gsub(".$", "", Pdb$JobDir), " ", Pdb$mode, sep=""))
   }
-  system(paste("perl ", scriptsDir, "RenumFiles.pl ", Pdb$PdbBase, " ", Pdb$JobDir, " ", Pdb$mode, sep="" ))
+  system(paste("perl ", Pdb$scriptsDir, "RenumFiles.pl ", Pdb$PdbBase, " ", Pdb$JobDir, " ", Pdb$mode, sep="" ))
 
-  system(paste("perl ", scriptsDir, "GenerateVisualizations.pl ", Pdb$PdbBase, "_", Pdb$mode, ".pdb_auxiliar ", Pdb$PdbBase, " ", gsub(".$", "", Pdb$JobDir), " ", Pdb$mode, sep=""))
-  system(paste("cp ", scriptsDir, "draw_links.py ", Pdb$JobDir, sep=""))
+  system(paste("perl ", Pdb$scriptsDir, "GenerateVisualizations.pl ", Pdb$PdbBase, "_", Pdb$mode, ".pdb_auxiliar ", Pdb$PdbBase, " ", gsub(".$", "", Pdb$JobDir), " ", Pdb$mode, sep=""))
+  system(paste("cp ", Pdb$scriptsDir, "draw_links.py ", Pdb$JobDir, sep=""))
 
   return(Pdb)
 }

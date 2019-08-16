@@ -1,5 +1,5 @@
 #----------Create the files and print the headers if needed--------
-open(PML, ">$ARGV[2]/$ARGV[1]\_$ARGV[3].pml");
+open(PML, ">$ARGV[2]/$ARGV[1].pdb\_$ARGV[3].pml");
 print PML 
 "load $ARGV[1].pdb
 hide all

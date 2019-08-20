@@ -1,12 +1,26 @@
-pdb_equivalences <- function(Pdb, JobDir, PdbBase)
+#' Pdb Equivalences
+#'
+#' Internal function that produces auxiliar files to run the frustratometer pipeline.
+#'
+#' @param Pdb Frustration object
+#' @return Pdb Frustration object with backbone completed
+#'
+pdb_equivalences <- function(Pdb)
 {
   existing_res <- unique(cbind(Pdb$atom$chain[which(Pdb$atom$type=="ATOM")], Pdb$atom$resno[which(Pdb$atom$type=="ATOM")], Pdb$atom$resid[which(Pdb$atom$type=="ATOM")]))
   equivalences <- cbind(existing_res[,1], seq(1:length(existing_res[,1])), existing_res[,2], existing_res[,3])
-  write.table(equivalences, file = paste(JobDir, "/", PdbBase, ".pdb_equivalences.txt", sep=""), quote = F, col.names = F, row.names = F, sep="\t")
+  write.table(equivalences, file = paste(Pdb$JobDir, "/", Pdb$PdbBase, ".pdb_equivalences.txt", sep=""), quote = F, col.names = F, row.names = F, sep="\t")
 
   Pdb[["equivalences"]] <- equivalences
   return(Pdb)
 }
+
+#' Check Backbone Complete
+#'
+#' Checks the backbone of a given protein structure to be processed by the frustratometer pipeline
+#'
+#' @param Pdb Frustration object
+#' @return Pdb Frustration object with backbone completed
 
 check_backbone_complete <- function(Pdb)
 {
@@ -27,12 +41,18 @@ check_backbone_complete <- function(Pdb)
   return(Complete)
 }
 
-complete_backbone <- function(Pdb, JobDir, PdbBase)
+#' Complete Backbone
+#'
+#' Completes the backbone of a given protein structure to be processed by the frustratometer pipeline
+#'
+#' @param Pdb Frustration object
+#' @return Pdb Frustration object with backbone completed
+complete_backbone <- function(Pdb)
 {
   if(!check_backbone_complete(Pdb))
   {
-    system(paste("python ", Pdb$scriptsDir, "MissingAtoms.py ",  JobDir, PdbBase, ".pdb", sep=""))
-    system(paste("mv ", JobDir, PdbBase, ".pdb_completed", " ", JobDir, PdbBase, ".pdb", sep=""))
+    system(paste("python ", Pdb$scriptsDir, "MissingAtoms.py ",  Pdb$JobDir, Pdb$PdbBase, ".pdb", sep=""))
+    system(paste("mv ", Pdb$JobDir, Pdb$PdbBase, ".pdb_completed", " ", Pdb$JobDir, Pdb$PdbBase, ".pdb", sep=""))
   }
 }
 
@@ -45,7 +65,10 @@ complete_backbone <- function(Pdb, JobDir, PdbBase)
 #' @param Electrostatics_K K constant to use in the electrostatics mode. Default: NULL (no electrostatics is considered).
 #' @param seqdist Sequence at which contacts are considered to interact.
 #' @param ResultsDir Path to the folder where results will be stored.
+#' @return Pdb Frustration object
 #'
+#' @export
+
 calculate_frustration <- function(PdbFile=PdbFile, Electrostatics_K=NULL, seqdist=12, Modes="configurational", ResultsDir)
 {
 
@@ -65,8 +88,8 @@ calculate_frustration <- function(PdbFile=PdbFile, Electrostatics_K=NULL, seqdis
   system(paste("cp ", PdbFile, " ", Pdb$JobDir, sep=""))
 
   # Save equivalences
-  Pdb <- pdb_equivalences(Pdb, Pdb$JobDir, Pdb$PdbBase)
-  complete_backbone(Pdb, Pdb$JobDir, Pdb$PdbBase)
+  Pdb <- pdb_equivalences(Pdb)
+  complete_backbone(Pdb)
 
   # PdbBase <- basename.pdb(PdbFile)
 

@@ -1,4 +1,10 @@
-
+#' Plot 5Adens
+#'
+#' Generates plot to analyze the density of contacts around a sphere of 5 Armstrongs, centered in the C-alfa atom from the residue. The different classes of contacts based on the mutational frustration index are counted in absolute terms.
+#'
+#' @param Pdb Frustration object
+#' @export
+#'
 plot_5Andens <- function(Pdb, chain=NULL)
 {
   JobID=Pdb$PdbBase;
@@ -42,6 +48,13 @@ plot_5Andens <- function(Pdb, chain=NULL)
   }
 }
 
+#' Plot 5Adens proportions
+#'
+#' Generates plot to analyze the density of contacts around a sphere of 5 Armstrongs, centered in the C-alfa atom from the residue. The different classes of contacts based on the mutational frustration index are counted in relative terms.
+#'
+#' @param Pdb Frustration object
+#' @export
+#'
 plot_5Adens_proportions <- function(Pdb, chain=NULL)
 {
   JobID=Pdb$PdbBase;
@@ -90,6 +103,13 @@ plot_5Adens_proportions <- function(Pdb, chain=NULL)
   }
 }
 
+#' Plot frustration contact map
+#'
+#' Generates contact map plot to visualize the frustration values assigned to each contact
+#'
+#' @param Pdb Frustration object
+#' @export
+#'
 plot_contact_map <-function(Pdb, chain=NULL)
 {
   JobID=Pdb$PdbBase;
@@ -181,6 +201,13 @@ plot_contact_map <-function(Pdb, chain=NULL)
   # dev.off()
 }
 
+#' View Frustration Pymol
+#'
+#' Generates a pymol session to observe the frustration patterns on top of the pdb protein structure
+#'
+#' @param Pdb Frustration object
+#' @export
+#'
 view_frustration_pymol <- function(pdb)
 {
   system(paste("cd ", Pdb$JobDir,  "; pymol ", Pdb$JobDir, Pdb$PdbBase, ".pdb_", Pdb$mode, ".pml", sep=""))

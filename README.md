@@ -26,3 +26,7 @@ perl
 
 modeller
 
+**An example about how to use the package can be found at:**
+
+https://github.com/gonzaparra/frustratometeR/blob/master/inst/Example.R
+

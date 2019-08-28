@@ -4,7 +4,7 @@ install_github("gonzaparra/frustratometeR")
 library(frustratometeR)
 library(bio3d)
 
-PdbFile="/home/gonzalo/Desktop/frustratometer2-master/1n0r.pdb"
+PdbFile="/home/gonzalo/frustratometeR/1a0i_A.pdb"
 
 ResultsDir="/home/gonzalo/Desktop/"
 Modes="configurational"

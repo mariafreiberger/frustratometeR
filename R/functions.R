@@ -61,6 +61,8 @@ complete_backbone <- function(Pdb)
 #' Calculates local energetic frustration for a protein structure
 #'
 #' @param PdbFile File containing the protein structure. The full path to the file is needed
+#' @param PdbID File containing the protein structure. The full path to the file is needed
+#' @param Chain File containing the protein structure. The full path to the file is needed
 #' @param Modes Local frustration index to be calculated (configurational, mutational, singleresidue). Default=configurational
 #' @param Electrostatics_K K constant to use in the electrostatics mode. Default: NULL (no electrostatics is considered).
 #' @param seqdist Sequence at which contacts are considered to interact.
@@ -69,10 +71,28 @@ complete_backbone <- function(Pdb)
 #'
 #' @export
 
-calculate_frustration <- function(PdbFile=PdbFile, Electrostatics_K=NULL, seqdist=12, Modes="configurational", ResultsDir)
+calculate_frustration <- function(PdbFile=NULL, PdbID=NULL, Chain=NULL, Electrostatics_K=NULL, seqdist=12, Modes="configurational", ResultsDir)
 {
 
-  Pdb <- read.pdb(PdbFile)
+  if(is.null(PdbFile))
+  {
+    tempfolder <-tempfile()
+    if(is.null(Chain))
+    {
+      boolsplit=F
+    }else{
+      boolsplit=T
+    }
+    PdbAux<-get.pdb(PdbID, split = boolsplit, path = tempfolder)
+    if(is.null(Chain))
+    {
+      PdbFile=paste(tempfolder,"/",PdbID,".pdb", sep="")
+    }else{
+      PdbFile=paste(tempfolder,"/split_chain/",PdbID, "_", Chain, ".pdb", sep="")
+    }
+  }
+
+  Pdb <- read.pdb(PdbFile, ATOM.only=T)
 
   PdbBase <- basename.pdb(PdbFile)
 

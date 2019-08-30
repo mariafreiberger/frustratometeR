@@ -73,6 +73,7 @@ calculate_frustration <- function(PdbFile=PdbFile, Electrostatics_K=NULL, seqdis
 {
 
   Pdb <- read.pdb(PdbFile)
+
   PdbBase <- basename.pdb(PdbFile)
 
   JobDir=paste(ResultsDir, PdbBase, ".done/", sep="")

@@ -92,8 +92,8 @@ calculate_frustration <- function(PdbFile=NULL, PdbID=NULL, Chain=NULL, Electros
     }
   }
 
-  Pdb <- read.pdb(PdbFile, ATOM.only=T)
-
+  Pdb <- read.pdb(PdbFile, ATOM.only=T, rm.alt = T, rm.insert = T)
+  write.pdb(Pdb, file = PdbFile)
   PdbBase <- basename.pdb(PdbFile)
 
   JobDir=paste(ResultsDir, PdbBase, ".done/", sep="")

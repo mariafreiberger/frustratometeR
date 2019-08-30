@@ -17,7 +17,7 @@ Pdb=calculate_frustration(PdbFile=PdbFile, Modes = "configurational", ResultsDir
 # Calculate frustration for a structure to be downloaded from the PDB
 Pdb=calculate_frustration(PdbID="1mj0", Modes = "configurational", ResultsDir = ResultsDir)
 
-# Calculate frustration for a particular chain in a structure to be downloaded from the PDB
+Calculate frustration for a particular chain in a structure to be downloaded from the PDB
 Pdb=calculate_frustration(PdbID="1ikn", Chain="D", Modes = "configurational", ResultsDir = ResultsDir)
 
 

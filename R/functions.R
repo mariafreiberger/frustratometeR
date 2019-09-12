@@ -53,6 +53,7 @@ complete_backbone <- function(Pdb)
   {
     system(paste("python ", Pdb$scriptsDir, "MissingAtoms.py ",  Pdb$JobDir, Pdb$PdbBase, ".pdb", sep=""))
     system(paste("mv ", Pdb$JobDir, Pdb$PdbBase, ".pdb_completed", " ", Pdb$JobDir, Pdb$PdbBase, ".pdb", sep=""))
+
   }
 }
 
@@ -92,10 +93,14 @@ calculate_frustration <- function(PdbFile=NULL, PdbID=NULL, Chain=NULL, Electros
     }
   }
 
+  # Here we filter out DNA chains
+  system(paste("awk '{if($0!~/DT/ && $0!~/DG/ && $0!~/DA/ && $0!~/DC/) print }' ", PdbFile," > ", tempfolder, "/aux", sep=""))
+  system(paste("mv ", tempfolder, "/aux ", PdbFile, sep=""))
+
+  # We read the pdb file and ignore alternative conformations, aminoacids and only read ATOM lines
   Pdb <- read.pdb(PdbFile, ATOM.only=T, rm.alt = T, rm.insert = T)
   write.pdb(Pdb, file = PdbFile)
   PdbBase <- basename.pdb(PdbFile)
-
   JobDir=paste(ResultsDir, PdbBase, ".done/", sep="")
 
   Pdb[["PdbBase"]] <- PdbBase
@@ -111,15 +116,12 @@ calculate_frustration <- function(PdbFile=NULL, PdbID=NULL, Chain=NULL, Electros
   Pdb <- pdb_equivalences(Pdb)
   complete_backbone(Pdb)
 
-  # PdbBase <- basename.pdb(PdbFile)
-
   print("Preparing files..")
   #Prepare the PDB file to get awsem input files, create the workdir and move neccessary files to it.
   system(paste("cd ", Pdb$JobDir, "; pwd; ", Pdb$scriptsDir, "AWSEMFiles/AWSEMTools/PdbCoords2Lammps.sh ", Pdb$PdbBase, " ", Pdb$PdbBase, " ", Pdb$scriptsDir, sep=""))
   system(paste("cp ", Pdb$scriptsDir, "AWSEMFiles/*.dat* ", Pdb$JobDir, sep=""))
 
   print("Setting options...")
-  #Modify the .in file to run a single step - Modify the fix_backbone file to change the mode and set options
 
   system(paste("cd ", JobDir, "; sed -i 's/run		10000/run		0/g' ", Pdb$PdbBase, ".in; sed -i 's/mutational/", Pdb$mode, "/g' fix_backbone_coeff.data",  sep=""))
 

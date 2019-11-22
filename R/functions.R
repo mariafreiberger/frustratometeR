@@ -144,6 +144,6 @@ calculate_frustration <- function(PdbFile=NULL, PdbID=NULL, Chain=NULL, Electros
 
   system(paste("perl ", Pdb$scriptsDir, "GenerateVisualizations.pl ", Pdb$PdbBase, "_", Pdb$mode, ".pdb_auxiliar ", Pdb$PdbBase, " ", gsub(".$", "", Pdb$JobDir), " ", Pdb$mode, sep=""))
   system(paste("cp ", Pdb$scriptsDir, "draw_links.py ", Pdb$JobDir, sep=""))
-
+  system(paste("python ", Pdb$scriptsDir, "carpets.py ",Pdb$JobDir," ",Pdb$PdbBase," ",Pdb$mode,sep=""))
   return(Pdb)
 }
